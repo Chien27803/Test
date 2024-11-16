@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": "../../../../Learn FE"
+		},
+		{
+			"path": "../../../../PyThon"
+		},
+		{
+			"path": "../../../../MauWeb"
+		},
+		{
+			"path": "../../unitop-php"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../Test"
+		},
+		{
+			"path": "../../PHPUnit"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Learn FE"
+	}
+}

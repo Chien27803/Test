@@ -1,45 +1,77 @@
 <?php
+include 'connect.php';
+session_start();
 
-include('connect.php');
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $taiKhoan = $_POST['ten'];
-    // $matKhau = password_hash($_POST['mk'], PASSWORD_DEFAULT);
-    $matKhau=$_POST['mk'];
-     $xacnhanmatkhau = $_POST['xacnhanmk']; 
-    $hovaten=$_POST['hovaten'];
-    $sdt = $_POST['sdt'];
-    $email = $_POST['email'];
-    $diachi = $_POST['diachi'];
-    $role = 'user';
+function checkTaiKhoanTonTai($conn, $taiKhoan) {
+    $result = $conn->query("SELECT TaiKhoan FROM nguoidung WHERE TaiKhoan = '$taiKhoan'");
+    return $result->num_rows > 0;
+}
+function validatePassword($matKhau, $xacnhanmatkhau) {
     if ($matKhau != $xacnhanmatkhau) {
-        echo "Mật khẩu và xác nhận mật khẩu không khớp.";
-        exit();
+        return "Mật khẩu và xác nhận mật khẩu không khớp.";
+    } 
+    if (strlen($matKhau) < 6) {
+        return "Độ dài mật khẩu phải ít nhất 6 ký tự.";
     }
-
-    $sql = "INSERT INTO NguoiDung (TaiKhoan, MatKhau, HoVaTen, SDT, Email, DiaChi, Role)
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'sssssss', $taiKhoan, $matKhau,$hovaten,$sdt, $email, $diachi, $role);
-
-    if (mysqli_stmt_execute($stmt)) {
-        header('Location: login.php');
-        
-        
-    } else {
-        $thongbao="Đăng ký thất bại";
+    $chuHoa = preg_match('@[A-Z]@', $matKhau);
+    $chuThuong = preg_match('@[a-z]@', $matKhau);
+    $So = preg_match('@[0-9]@', $matKhau);
+    if (!$chuHoa || !$chuThuong || !$So) {
+        return "Yêu cầu mật khẩu của bạn phải có cả chữ in hoa, chữ thường và số!";
     }
-
-    mysqli_stmt_close($stmt);
+    return ''; // Không có lỗi
+}
+function validatePhoneNumber($sdt) {
+    if (!preg_match('@[0-9]@', $sdt) || strlen($sdt) != 10) {
+        return "Định dạng số điện thoại của bạn chưa đúng.";
+    }
+    return ''; // Không có lỗi
+}
+function registerUser($conn, $taiKhoan, $matKhau, $hovaten, $sdt, $email, $diachi, $role) {
+    $stmt = $conn->prepare("INSERT INTO nguoidung (TaiKhoan, MatKhau, HoVaTen, SDT, Email, DiaChi, Role) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssss", $taiKhoan, $matKhau, $hovaten, $sdt, $email, $diachi, $role);
+    return $stmt->execute();
 }
 
+
+
+
+if (isset($_POST['dangKy'])) {
+    $taiKhoan       = trim($_POST['ten']);
+    $matKhau        = trim($_POST['mk']);
+    $xacnhanmatkhau = trim($_POST['xacnhanmk']);
+    $hovaten        = trim($_POST['hovaten']);
+    $sdt            = trim($_POST['sdt']);
+    $email          = trim($_POST['email']);
+    $diachi         = trim($_POST['diachi']);
+    $role           = 'user';
+    $thongbao       = ''; // Khởi tạo biến thông báo lỗi
+
+    // Kiểm tra tài khoản đã tồn tại
+    if (checkTaiKhoanTonTai($conn, $taiKhoan)) {
+        $thongbao = "Tên tài khoản đã tồn tại. Vui lòng nhập tên tài khoản khác.";
+    }
+    else {
+        // Kiểm tra mật khẩu và xác nhận mật khẩu
+        $thongbao = validatePassword($matKhau, $xacnhanmatkhau);
+        
+        if (empty($thongbao)) {
+            // Kiểm tra số điện thoại
+            $thongbao = validatePhoneNumber($sdt);
+        }
+        
+        if (empty($thongbao)) {
+            // Nếu không có lỗi, đăng ký người dùng
+            if (registerUser($conn, $taiKhoan, $matKhau, $hovaten, $sdt, $email, $diachi, $role)) {
+                header('Location: login.php');
+                exit(); // Đảm bảo kết thúc script sau khi chuyển hướng
+            } else {
+                $thongbao = "Đăng ký thất bại.";
+            }
+        }
+    }
+}
 ?>
-
-
-
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -196,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             </div>
 
-            <input type="submit" value="Đăng ký" class="form-submit">
+            <input type="submit" value="Đăng ký" name="dangKy" class="form-submit">
 
 
 

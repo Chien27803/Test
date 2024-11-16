@@ -8,7 +8,7 @@ if (!$conn) {
 
 $user = null;
 if (isset($_SESSION['id'])) {
-    $result = $conn->query("SELECT * FROM NguoiDung WHERE id = " . $_SESSION['id']);
+    $result = $conn->query("SELECT * FROM nguoidung WHERE id = " . $_SESSION['id']);
     if ($result && $result->num_rows > 0) {
         $user = $result->fetch_assoc();
     }
@@ -67,7 +67,7 @@ if (isset($_SESSION['id'])) {
     <?php endif; ?>
 
     <div class="bamien">
-        <div id="mb"><a href="">MIỀN BẮC</a></div>
+        <div id="mb"><a href="MienBac.php">MIỀN BẮC</a></div>
         <div id="mt"><a href="">MIỀN TRUNG</a></div>
         <div id="mn"><a href="">MIỀN NAM</a></div>
     </div>
